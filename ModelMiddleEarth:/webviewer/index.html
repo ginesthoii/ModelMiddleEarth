@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Model Middle-earth — Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { margin:0; height:100%; background:#0f0f0f; color:#ddd; font-family:system-ui, sans-serif; }
+    #app { height:100%; display:flex; flex-direction:column; }
+    header { padding:10px 14px; border-bottom:1px solid #222; }
+    canvas { display:block; }
+    .hint { opacity:.7; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <strong>Model Middle-earth</strong> — <span class="hint">drag to orbit • scroll to zoom • right-drag to pan</span>
+    </header>
+  </div>
+
+  <!-- Three.js + GLTFLoader from CDN -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f0f0f);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight - 42);
+    document.getElementById('app').appendChild(renderer.domElement);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight - 42), 0.1, 2000);
+    camera.position.set(0, -140, 90);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // Lights
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 0.6);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(100, -100, 150);
+    scene.add(dir);
+
+    // Ground grid for scale reference
+    const grid = new THREE.GridHelper(200, 20, 0x333333, 0x222222);
+    scene.add(grid);
+
+    // Load exported terrain
+    const loader = new THREE.GLTFLoader();
+    loader.load('scene.gltf', (gltf) => {
+      const root = gltf.scene;
+      root.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; }});
+      scene.add(root);
+
+      // Auto-fit camera
+      const box = new THREE.Box3().setFromObject(root);
+      const size = box.getSize(new THREE.Vector3()).length();
+      const center = box.getCenter(new THREE.Vector3());
+      controls.target.copy(center);
+      camera.near = size / 100;
+      camera.far = size * 10;
+      camera.updateProjectionMatrix();
+    }, undefined, (err) => {
+      console.warn("Could not load scene.gltf yet. Export from Blender first.", err);
+    });
+
+    function onResize() {
+      const h = window.innerHeight - 42;
+      camera.aspect = window.innerWidth / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, h);
+    }
+    window.addEventListener('resize', onResize);
+
+    (function animate(){
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  </script>
+</body>
+</html>
