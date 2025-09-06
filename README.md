@@ -31,6 +31,14 @@ From terrain maps to cityscapes (Minas Tirith, Rivendell, etc.), this project ex
 
 ---
 
+<p align="center">
+  <img src="https://github.com/ginesthoii/ModelMiddleEarth/blob/main/images/hobbit.gif" alt="Terminal GIF" height="420" width="350"/>
+</p>
+
+
+
+---
+
 ## Roadmap
 - [ ] Procedural terrain generator for Middle-earth landscapes  
 - [ ] First city model: Minas Tirith (white city)  
